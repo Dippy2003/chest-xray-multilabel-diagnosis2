@@ -40,8 +40,8 @@ PATIENCE = 5  # for early stopping
 
 # Split ratios
 TRAIN_RATIO = 0.7
-VAL_RATIO = 0.1
-TEST_RATIO = 0.2
+VAL_RATIO = 0.15
+TEST_RATIO = 0.15
 
 # Random seed for reproducibility
 SEED = 42
