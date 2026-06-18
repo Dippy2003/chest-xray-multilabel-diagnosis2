@@ -1,6 +1,7 @@
 """
 Custom PyTorch Dataset for multi-label chest X-ray classification.
 """
+from pathlib import Path
 from typing import Tuple, Optional, Dict, List
 import pandas as pd
 import torch
@@ -18,7 +19,9 @@ class ChestXrayDataset(Dataset):
     Uses BCEWithLogitsLoss, so targets are expected as float tensors with values in [0, 1].
     
     Args:
-        img_dir: Directory containing image files
+        img_dir: Directory containing image files. Joined with each row's
+            'image_path' (a filename, not an absolute path) to locate the file
+            on disk — keeps the splits CSV portable across machines.
         labels_df: DataFrame with columns ['image_path', 'No Finding', 'Atelectasis', 'Cardiomegaly', 'Effusion', 'Pneumonia']
         transform: Optional image transformation pipeline
         class_names: List of class names (order matters for label encoding)
@@ -57,9 +60,9 @@ class ChestXrayDataset(Dataset):
             Tuple of (image tensor, labels tensor)
         """
         row = self.labels_df.iloc[idx]
-        
+
         # Load image
-        img_path = row["image_path"]
+        img_path = Path(self.img_dir) / row["image_path"]
         try:
             image = Image.open(img_path).convert("RGB")
         except Exception as e:
