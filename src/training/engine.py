@@ -5,11 +5,25 @@ transfer-learning models so training logic isn't duplicated per architecture.
 from pathlib import Path
 from typing import Dict, Tuple
 
+import pandas as pd
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from evaluation.metrics import compute_metrics
+
+
+def compute_pos_weight(train_df: pd.DataFrame, class_names: list, max_weight: float = 20.0) -> torch.Tensor:
+    """
+    pos_weight[c] = (negative count) / (positive count) for class c, capped at
+    max_weight. See scripts/train_baseline.py for the full reasoning - same
+    formula reused here so every model (baseline + transfer learning) handles
+    imbalance the same way and results are comparable.
+    """
+    pos_counts = train_df[class_names].sum()
+    neg_counts = len(train_df) - pos_counts
+    raw_weight = (neg_counts / pos_counts.clip(lower=1)).clip(upper=max_weight)
+    return torch.tensor(raw_weight.values, dtype=torch.float32)
 
 
 def train_one_epoch(

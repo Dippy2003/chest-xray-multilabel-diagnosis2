@@ -19,7 +19,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from data import create_dataloaders
 from evaluation import format_metrics
 from models import BaselineCNN
-from training import EarlyStopping, evaluate, save_checkpoint, train_one_epoch
+from training import EarlyStopping, compute_pos_weight, evaluate, save_checkpoint, train_one_epoch
 from utils import (
     CLASS_NAMES,
     IMAGE_SIZE,
@@ -34,25 +34,6 @@ from utils import (
     get_device,
     set_seed,
 )
-
-
-def compute_pos_weight(train_df: pd.DataFrame, class_names: list, max_weight: float = 20.0) -> torch.Tensor:
-    """
-    pos_weight[c] = (negative count) / (positive count) for class c — the standard
-    recipe for BCEWithLogitsLoss under class imbalance, since it equalizes the
-    expected positive- and negative-term loss contributions per class regardless
-    of how rare the positive class is.
-
-    Capped at max_weight: Pneumonia has ~46 positives out of 3924 train samples,
-    giving an uncapped ratio of ~84x. Weighting that aggressively risks unstable
-    gradients / the model overcorrecting into predicting Pneumonia too liberally.
-    Capping at 20x is a judgment call, not a textbook value — worth revisiting in
-    Day 4 if Pneumonia's recall/precision trade-off looks off.
-    """
-    pos_counts = train_df[class_names].sum()
-    neg_counts = len(train_df) - pos_counts
-    raw_weight = (neg_counts / pos_counts.clip(lower=1)).clip(upper=max_weight)
-    return torch.tensor(raw_weight.values, dtype=torch.float32)
 
 
 def main():
