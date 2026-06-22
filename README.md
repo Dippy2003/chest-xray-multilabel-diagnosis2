@@ -14,29 +14,38 @@ Build a multi-label chest X-ray disease classifier with:
 
 ## 📊 Dataset
 
-NIH ChestX-ray14 (via Kaggle) - 5 classes:
-- No Finding (majority class)
-- Pneumonia
-- Effusion
-- Atelectasis
-- Cardiomegaly
+NIH ChestX-ray14 sample set (via Kaggle, `nih-chest-xrays/sample`) - 5,606 images, 5 classes:
+- No Finding (54.3%)
+- Effusion (11.5%)
+- Atelectasis (9.1%)
+- Cardiomegaly (2.5%)
+- Pneumonia (1.1%)
+
+Using the official 5,606-image sample rather than the full 112k-image dataset (45GB) -
+fits on a 4GB VRAM GPU within the project's time budget, still keeps the same severe
+imbalance (~49x between most/least common class) that the project is about handling.
 
 ## 📁 Project Structure
 
 ```
 ├── data/
-│   ├── raw/                # Raw images from Kaggle
-│   ├── processed/          # Resized/normalized images
-│   └── metadata/           # Train/val/test splits
+│   ├── raw/                # Raw images from Kaggle (gitignored)
+│   └── metadata/           # dataset_splits.csv, EDA plots
 ├── src/
-│   ├── data/              # Dataset & DataLoader utilities
-│   ├── models/            # Model architectures
-│   ├── training/          # Training loops & metrics
-│   ├── visualization/     # Grad-CAM & plotting
-│   └── utils/             # Config & helpers
+│   ├── data/               # Dataset & DataLoader utilities
+│   ├── models/              # baseline CNN, ResNet50/EfficientNet-B0 transfer learning
+│   ├── training/            # train/eval engine, early stopping, pos_weight calc
+│   ├── evaluation/          # per-class AUC-ROC/F1 metrics
+│   ├── visualization/       # Grad-CAM & plotting (not yet built)
+│   └── utils/               # Config & helpers
+├── scripts/
+│   ├── train_baseline.py
+│   ├── train_resnet.py
+│   └── train_efficientnet.py
 ├── notebooks/
-│   └── 01_eda.ipynb      # Exploratory data analysis
-└── results/               # Saved models & visualizations
+│   └── 01_eda.ipynb
+└── results/
+    └── metrics/             # training history + test metrics per model, model_comparison.md
 ```
 
 ## 🚀 Quick Start
@@ -46,21 +55,28 @@ NIH ChestX-ray14 (via Kaggle) - 5 classes:
    pip install -r requirements.txt
    ```
 
-2. **Download dataset:**
-   Run the EDA notebook to automatically download via Kaggle API.
-
-3. **Phase 1 - Data Exploration:**
+2. **Download + explore data:**
    ```bash
    jupyter notebook notebooks/01_eda.ipynb
    ```
+   downloads the dataset via Kaggle API, builds dataset_splits.csv
 
-## 📚 Phases
+3. **Train a model:**
+   ```bash
+   python scripts/train_baseline.py
+   python scripts/train_resnet.py
+   python scripts/train_efficientnet.py
+   ```
 
-- **Phase 1:** Data loading & EDA
-- **Phase 2:** Baseline CNN architecture
-- **Phase 3:** Transfer learning (ResNet50, EfficientNet-B0)
-- **Phase 4:** Class imbalance handling & evaluation
-- **Phase 5:** Grad-CAM & final report
+## 📚 Progress (5-day plan)
+
+- ✅ **Day 1:** Data loading, EDA, train/val/test splits
+- ✅ **Day 2:** Baseline CNN from scratch - test macro AUC 0.677
+- ✅ **Day 3:** Transfer learning (ResNet50 0.755, EfficientNet-B0 0.728) - both beat baseline
+- ⬜ **Day 4:** Imbalance deep-dive + per-class threshold tuning
+- ⬜ **Day 5:** Grad-CAM + final write-up
+
+See [results/metrics/model_comparison.md](results/metrics/model_comparison.md) for full per-class numbers.
 
 ## 🛠️ Tech Stack
 
