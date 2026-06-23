@@ -73,7 +73,7 @@ imbalance (~49x between most/least common class) that the project is about handl
 - ✅ **Day 1:** Data loading, EDA, train/val/test splits
 - ✅ **Day 2:** Baseline CNN from scratch - test macro AUC 0.677
 - ✅ **Day 3:** Transfer learning (ResNet50 0.755, EfficientNet-B0 0.728) - both beat baseline
-- ⬜ **Day 4:** Imbalance deep-dive + per-class threshold tuning
+- ✅ **Day 4:** Per-class threshold tuning - resnet50 macro F1 0.308 → 0.318
 - ⬜ **Day 5:** Grad-CAM + final write-up
 
 See [results/metrics/model_comparison.md](results/metrics/model_comparison.md) for full per-class numbers.
