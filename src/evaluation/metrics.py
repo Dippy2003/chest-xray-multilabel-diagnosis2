@@ -6,7 +6,7 @@ at ~1% of samples, a model that always predicts the majority class scores high
 accuracy while being useless. AUC-ROC (threshold-independent) and F1 (threshold-
 dependent, balances precision/recall) are reported per class instead.
 """
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import torch
@@ -17,7 +17,7 @@ def compute_metrics(
     y_true: torch.Tensor,
     y_logits: torch.Tensor,
     class_names: List[str],
-    threshold: float = 0.5,
+    threshold: Union[float, Dict[str, float]] = 0.5,
 ) -> Dict[str, Dict[str, float]]:
     """
     Compute per-class AUC-ROC and F1 from raw model logits.
@@ -26,9 +26,9 @@ def compute_metrics(
         y_true: Tensor of shape (N, num_classes), binary ground-truth labels.
         y_logits: Tensor of shape (N, num_classes), raw model outputs (pre-sigmoid).
         class_names: Class names in the same order as the columns.
-        threshold: Probability threshold for converting sigmoid outputs to
-            binary predictions when computing F1. A single global threshold
-            is a simplification — per-class threshold tuning comes in Day 4.
+        threshold: Either one flat probability threshold applied to every
+            class, or a dict mapping class_name -> threshold (see
+            evaluation/threshold_tuning.py for picking per-class values).
 
     Returns:
         Dict with one entry per class_name (each holding 'auc_roc' and 'f1'),
@@ -37,13 +37,14 @@ def compute_metrics(
     """
     y_true_np = y_true.detach().cpu().numpy()
     y_prob_np = torch.sigmoid(y_logits).detach().cpu().numpy()
-    y_pred_np = (y_prob_np >= threshold).astype(int)
 
     results: Dict[str, Dict[str, float]] = {}
     aucs, f1s = [], []
 
     for i, class_name in enumerate(class_names):
-        f1 = f1_score(y_true_np[:, i], y_pred_np[:, i], zero_division=0)
+        t = threshold[class_name] if isinstance(threshold, dict) else threshold
+        y_pred_class = (y_prob_np[:, i] >= t).astype(int)
+        f1 = f1_score(y_true_np[:, i], y_pred_class, zero_division=0)
 
         # roc_auc_score requires both classes present; guard against the
         # degenerate case (e.g. a tiny eval batch with no positive samples)
