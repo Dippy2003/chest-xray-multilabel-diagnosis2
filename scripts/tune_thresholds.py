@@ -76,6 +76,15 @@ def main():
     with open(METRICS_DIR / f"{args.model}_thresholds.json", "w") as f:
         json.dump(thresholds, f, indent=2)
 
+    test_labels, test_logits = get_logits(model, test_loader, device)
+    test_metrics_tuned = compute_metrics(test_labels, test_logits, CLASS_NAMES, threshold=thresholds)
+
+    print("\nTest metrics with tuned thresholds:")
+    print(format_metrics(test_metrics_tuned))
+
+    with open(METRICS_DIR / f"{args.model}_test_metrics_tuned.json", "w") as f:
+        json.dump(test_metrics_tuned, f, indent=2)
+
 
 if __name__ == "__main__":
     main()
