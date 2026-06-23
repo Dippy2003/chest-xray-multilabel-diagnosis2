@@ -1,0 +1,7 @@
+{
+  "No Finding": 0.4,
+  "Atelectasis": 0.7000000000000001,
+  "Cardiomegaly": 0.6500000000000001,
+  "Effusion": 0.55,
+  "Pneumonia": 0.3
+}
