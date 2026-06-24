@@ -45,8 +45,8 @@ imbalance (~49x between most/least common class) that the project is about handl
 │   ├── tune_thresholds.py
 │   └── run_gradcam.py
 ├── app/
-│   ├── main.py             # FastAPI server (predict + gradcam endpoints)
-│   └── static/             # upload page (html/css/js)
+│   └── main.py             # FastAPI server (predict + gradcam endpoints, serves web/dist)
+├── web/                    # React + Vite + Tailwind + shadcn/ui frontend
 ├── notebooks/
 │   └── 01_eda.ipynb
 └── results/
@@ -75,12 +75,24 @@ imbalance (~49x between most/least common class) that the project is about handl
    python scripts/train_efficientnet.py
    ```
 
-4. **Run the web demo:**
+4. **Build the frontend (one-time, or after changing web/):**
+   ```bash
+   cd web
+   npm install
+   npm run build
+   cd ..
+   ```
+
+5. **Run the web demo:**
    ```bash
    uvicorn app.main:app --reload
    ```
    open http://127.0.0.1:8000 - upload a chest X-ray, get per-class probabilities
    (resnet50, tuned thresholds) plus a Grad-CAM heatmap for the top predicted class
+
+   for frontend development with hot reload instead, run `npm run dev` inside `web/`
+   (proxies `/predict` and `/health` to the FastAPI server on port 8000) and open
+   http://localhost:5173
 
 ## 📚 Progress (5-day plan)
 
