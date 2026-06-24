@@ -8,3 +8,6 @@ seaborn==0.13.0
 Pillow==10.1.0
 kaggle==1.5.13
 tqdm==4.66.1
+fastapi==0.128.1
+uvicorn==0.40.0
+python-multipart==0.0.32
