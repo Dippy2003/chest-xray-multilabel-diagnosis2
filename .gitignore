@@ -68,7 +68,6 @@ data/raw/
 data/processed/*
 !data/processed/.gitkeep
 results/models/
-results/visualizations/
 
 # OS
 .DS_Store
