@@ -2,6 +2,7 @@
 FastAPI app serving the resnet50 model for the web demo - upload a chest
 X-ray, get back per-class probabilities using the Day 4 tuned thresholds.
 """
+import base64
 import io
 import json
 import sys
@@ -17,6 +18,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from data.loader import get_val_transforms
 from models import ResNetTransfer
 from utils import CLASS_NAMES, IMAGE_SIZE, METRICS_DIR, MODELS_DIR, get_device
+from visualization.gradcam import GradCAM, overlay_heatmap
 
 app = FastAPI(title="Chest X-ray Classifier")
 
@@ -30,6 +32,7 @@ with open(METRICS_DIR / "resnet50_thresholds.json") as f:
     THRESHOLDS = json.load(f)
 
 transform = get_val_transforms(IMAGE_SIZE)
+cam = GradCAM(model, model.backbone.layer4)
 
 
 @app.get("/health")
@@ -54,4 +57,19 @@ async def predict(file: UploadFile = File(...)):
             "predicted": prob >= THRESHOLDS[class_name],
         }
 
-    return {"predictions": results}
+    # explain whichever class the model is most confident about
+    top_class_idx = max(range(len(CLASS_NAMES)), key=lambda i: probs[i])
+    heatmap = cam(image_tensor, class_idx=top_class_idx)
+    overlay = overlay_heatmap(image_tensor.squeeze(0), heatmap)
+
+    buf = io.BytesIO()
+    Image.fromarray(overlay).save(buf, format="PNG")
+    gradcam_b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+    return {
+        "predictions": results,
+        "gradcam": {
+            "class": CLASS_NAMES[top_class_idx],
+            "image_base64": gradcam_b64,
+        },
+    }
