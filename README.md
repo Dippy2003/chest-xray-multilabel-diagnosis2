@@ -1,3 +1,13 @@
+---
+title: Chest X-ray Multilabel Diagnosis
+emoji: 🫁
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Multi-label Chest X-ray Disease Classifier
 
 A deep learning portfolio project demonstrating advanced PyTorch modeling skills for multi-label medical image classification.
