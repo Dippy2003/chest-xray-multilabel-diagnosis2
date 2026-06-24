@@ -88,6 +88,8 @@ Grad-CAM on resnet50's last conv block (`layer4`), showing what the model actual
 
 Cardiomegaly's heatmap lands right on the heart silhouette, and Effusion lights up the lower lung / costophrenic region - both match where a radiologist would actually look, which is a good sign the model learned real features and not some dataset artifact.
 
+Full write-up: [results/RESULTS.md](results/RESULTS.md)
+
 ## 🛠️ Tech Stack
 
 - **Framework:** PyTorch + torchvision
