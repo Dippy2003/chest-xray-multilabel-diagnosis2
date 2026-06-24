@@ -67,7 +67,8 @@ venv.bak/
 data/raw/
 data/processed/*
 !data/processed/.gitkeep
-results/models/
+results/models/*
+!results/models/resnet50_best.pt
 
 # OS
 .DS_Store
