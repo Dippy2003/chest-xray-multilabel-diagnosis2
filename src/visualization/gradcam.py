@@ -3,8 +3,13 @@ Grad-CAM for the ResNet50 transfer model - shows which pixels the model
 actually looked at for a given predicted class, instead of trusting the
 AUC/F1 numbers blindly.
 """
+import numpy as np
 import torch
 import torch.nn.functional as F
+from matplotlib import cm
+
+IMAGENET_MEAN = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
+IMAGENET_STD = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
 
 
 class GradCAM:
@@ -55,3 +60,23 @@ class GradCAM:
         if heatmap.max() > 0:
             heatmap /= heatmap.max()
         return heatmap
+
+
+def overlay_heatmap(image: torch.Tensor, heatmap: torch.Tensor, alpha: float = 0.4) -> np.ndarray:
+    """
+    Blend a Grad-CAM heatmap onto the original (normalized) image tensor.
+
+    Args:
+        image: (3, H, W) tensor, normalized with ImageNet mean/std.
+        heatmap: (H, W) tensor, values in [0, 1] (output of GradCAM.__call__).
+        alpha: heatmap opacity in the blend.
+
+    Returns:
+        (H, W, 3) uint8 RGB array, ready to save/plot.
+    """
+    denorm = image.cpu() * IMAGENET_STD + IMAGENET_MEAN
+    img_np = denorm.clamp(0, 1).permute(1, 2, 0).numpy()
+
+    colored = cm.jet(heatmap.numpy())[:, :, :3]
+    blended = (1 - alpha) * img_np + alpha * colored
+    return (blended * 255).clip(0, 255).astype(np.uint8)
