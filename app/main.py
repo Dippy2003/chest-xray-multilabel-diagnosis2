@@ -10,6 +10,7 @@ from pathlib import Path
 
 import torch
 from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
@@ -25,6 +26,12 @@ from visualization.gradcam import GradCAM, overlay_heatmap
 STATIC_DIR = Path(__file__).parent / "static"
 
 app = FastAPI(title="Chest X-ray Classifier")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
