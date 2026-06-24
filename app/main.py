@@ -10,6 +10,8 @@ from pathlib import Path
 
 import torch
 from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from PIL import Image
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -20,7 +22,15 @@ from models import ResNetTransfer
 from utils import CLASS_NAMES, IMAGE_SIZE, METRICS_DIR, MODELS_DIR, get_device
 from visualization.gradcam import GradCAM, overlay_heatmap
 
+STATIC_DIR = Path(__file__).parent / "static"
+
 app = FastAPI(title="Chest X-ray Classifier")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+@app.get("/")
+def index():
+    return FileResponse(STATIC_DIR / "index.html")
 
 device = get_device()
 model = ResNetTransfer(num_classes=len(CLASS_NAMES)).to(device)
