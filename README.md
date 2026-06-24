@@ -74,9 +74,19 @@ imbalance (~49x between most/least common class) that the project is about handl
 - ✅ **Day 2:** Baseline CNN from scratch - test macro AUC 0.677
 - ✅ **Day 3:** Transfer learning (ResNet50 0.755, EfficientNet-B0 0.728) - both beat baseline
 - ✅ **Day 4:** Per-class threshold tuning - resnet50 macro F1 0.308 → 0.318
-- ⬜ **Day 5:** Grad-CAM + final write-up
+- ✅ **Day 5:** Grad-CAM visualizations + final write-up
 
 See [results/metrics/model_comparison.md](results/metrics/model_comparison.md) for full per-class numbers.
+
+## 🔥 Grad-CAM
+
+Grad-CAM on resnet50's last conv block (`layer4`), showing what the model actually looks at for each predicted class:
+
+| Cardiomegaly | Effusion | Atelectasis |
+|---|---|---|
+| ![cardiomegaly](results/visualizations/gradcam_13_Cardiomegaly.png) | ![effusion](results/visualizations/gradcam_5_Effusion.png) | ![atelectasis](results/visualizations/gradcam_9_Atelectasis.png) |
+
+Cardiomegaly's heatmap lands right on the heart silhouette, and Effusion lights up the lower lung / costophrenic region - both match where a radiologist would actually look, which is a good sign the model learned real features and not some dataset artifact.
 
 ## 🛠️ Tech Stack
 
