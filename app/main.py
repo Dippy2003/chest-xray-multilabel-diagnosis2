@@ -23,7 +23,7 @@ from models import ResNetTransfer
 from utils import CLASS_NAMES, IMAGE_SIZE, METRICS_DIR, MODELS_DIR, get_device
 from visualization.gradcam import GradCAM, overlay_heatmap
 
-STATIC_DIR = Path(__file__).parent / "static"
+WEB_DIST_DIR = PROJECT_ROOT / "web" / "dist"
 
 app = FastAPI(title="Chest X-ray Classifier")
 app.add_middleware(
@@ -32,12 +32,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+app.mount("/assets", StaticFiles(directory=WEB_DIST_DIR / "assets"), name="assets")
 
 
 @app.get("/")
 def index():
-    return FileResponse(STATIC_DIR / "index.html")
+    return FileResponse(WEB_DIST_DIR / "index.html")
 
 device = get_device()
 model = ResNetTransfer(num_classes=len(CLASS_NAMES)).to(device)
