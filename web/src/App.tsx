@@ -31,7 +31,10 @@ function App() {
 
     try {
       const response = await fetch('/predict', { method: 'POST', body: formData })
-      if (!response.ok) throw new Error(`server returned ${response.status}`)
+      if (!response.ok) {
+        const body = await response.json().catch(() => null)
+        throw new Error(body?.detail ?? `server returned ${response.status}`)
+      }
       const data: PredictResponse = await response.json()
       setResult(data)
     } catch (err) {
