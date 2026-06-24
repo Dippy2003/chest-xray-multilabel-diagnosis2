@@ -35,17 +35,24 @@ imbalance (~49x between most/least common class) that the project is about handl
 │   ├── data/               # Dataset & DataLoader utilities
 │   ├── models/              # baseline CNN, ResNet50/EfficientNet-B0 transfer learning
 │   ├── training/            # train/eval engine, early stopping, pos_weight calc
-│   ├── evaluation/          # per-class AUC-ROC/F1 metrics
-│   ├── visualization/       # Grad-CAM & plotting (not yet built)
+│   ├── evaluation/          # per-class AUC-ROC/F1 metrics, threshold tuning
+│   ├── visualization/       # Grad-CAM
 │   └── utils/               # Config & helpers
 ├── scripts/
 │   ├── train_baseline.py
 │   ├── train_resnet.py
-│   └── train_efficientnet.py
+│   ├── train_efficientnet.py
+│   ├── tune_thresholds.py
+│   └── run_gradcam.py
+├── app/
+│   ├── main.py             # FastAPI server (predict + gradcam endpoints)
+│   └── static/             # upload page (html/css/js)
 ├── notebooks/
 │   └── 01_eda.ipynb
 └── results/
-    └── metrics/             # training history + test metrics per model, model_comparison.md
+    ├── metrics/             # training history + test metrics per model, model_comparison.md
+    ├── visualizations/      # gradcam example overlays
+    └── RESULTS.md           # final write-up
 ```
 
 ## 🚀 Quick Start
@@ -67,6 +74,13 @@ imbalance (~49x between most/least common class) that the project is about handl
    python scripts/train_resnet.py
    python scripts/train_efficientnet.py
    ```
+
+4. **Run the web demo:**
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+   open http://127.0.0.1:8000 - upload a chest X-ray, get per-class probabilities
+   (resnet50, tuned thresholds) plus a Grad-CAM heatmap for the top predicted class
 
 ## 📚 Progress (5-day plan)
 
