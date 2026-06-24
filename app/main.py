@@ -8,8 +8,9 @@ import json
 import sys
 from pathlib import Path
 
+import numpy as np
 import torch
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -52,6 +53,15 @@ transform = get_val_transforms(IMAGE_SIZE)
 cam = GradCAM(model, model.backbone.layer4)
 
 
+def looks_like_xray(image: Image.Image) -> bool:
+    """X-rays are essentially grayscale - reject images with strong color content."""
+    small = image.resize((64, 64))
+    arr = np.asarray(small, dtype=np.float32)
+    r, g, b = arr[..., 0], arr[..., 1], arr[..., 2]
+    channel_spread = np.mean(np.abs(r - g) + np.abs(g - b) + np.abs(r - b))
+    return channel_spread < 12
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "device": str(device)}
@@ -61,6 +71,10 @@ def health():
 async def predict(file: UploadFile = File(...)):
     image_bytes = await file.read()
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+
+    if not looks_like_xray(image):
+        raise HTTPException(status_code=400, detail="Please import an X-ray image.")
+
     image_tensor = transform(image).unsqueeze(0).to(device)
 
     with torch.no_grad():
