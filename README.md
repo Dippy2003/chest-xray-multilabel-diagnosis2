@@ -12,6 +12,8 @@ pinned: false
 
 A deep learning portfolio project demonstrating advanced PyTorch modeling skills for multi-label medical image classification.
 
+**🚀 Live demo:** [dipnas-chest-xray-multilabel-diagnosis2.hf.space](https://dipnas-chest-xray-multilabel-diagnosis2.hf.space)
+
 ## 🎯 Project Goal
 
 Build a multi-label chest X-ray disease classifier with:
@@ -132,6 +134,9 @@ Full write-up: [results/RESULTS.md](results/RESULTS.md)
 - **Metrics:** scikit-learn (AUC-ROC, F1)
 - **Viz:** matplotlib, seaborn
 - **Dataset:** Kaggle API
+- **Backend:** FastAPI serving predictions + Grad-CAM overlays
+- **Frontend:** React + Vite + TypeScript + Tailwind v4 + shadcn/ui + Framer Motion
+- **Deployment:** Docker, hosted on Hugging Face Spaces
 
 ## 📝 Design Decisions
 
