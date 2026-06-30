@@ -8,86 +8,145 @@ app_port: 7860
 pinned: false
 ---
 
+<div align="center">
+
 # Multi-label Chest X-ray Disease Classifier
 
-A deep learning portfolio project demonstrating advanced PyTorch modeling skills for multi-label medical image classification.
+> Deep learning for pathology detection across 5 disease classes from a single chest X-ray
 
-**🚀 Live demo:** [dipnas-chest-xray-multilabel-diagnosis2.hf.space](https://dipnas-chest-xray-multilabel-diagnosis2.hf.space)
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![Docker](https://img.shields.io/badge/Docker-Hugging%20Face%20Spaces-2496ED?logo=docker&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-## 🎯 Project Goal
+**Live demo:** [dipnas-chest-xray-multilabel-diagnosis2.hf.space](https://dipnas-chest-xray-multilabel-diagnosis2.hf.space)
 
-Build a multi-label chest X-ray disease classifier with:
-- Custom CNN baseline trained from scratch
-- Transfer learning with ResNet50 and EfficientNet-B0
-- Proper handling of severe class imbalance
-- AUC-ROC and per-class F1 evaluation metrics
-- Grad-CAM visualizations for model interpretability
-- Clean, modular codebase
+</div>
 
-## 📊 Dataset
+---
 
-NIH ChestX-ray14 sample set (via Kaggle, `nih-chest-xrays/sample`) - 5,606 images, 5 classes:
-- No Finding (54.3%)
-- Effusion (11.5%)
-- Atelectasis (9.1%)
-- Cardiomegaly (2.5%)
-- Pneumonia (1.1%)
+## What It Does
 
-Using the official 5,606-image sample rather than the full 112k-image dataset (45GB) -
-fits on a 4GB VRAM GPU within the project's time budget, still keeps the same severe
-imbalance (~49x between most/least common class) that the project is about handling.
+| Input | Action | Output |
+|---|---|---|
+| Chest X-ray image (PNG/JPG) | Multi-label classification via ResNet50 | Per-class disease probabilities with confidence |
+| Same image | Grad-CAM on `layer4` | Heatmap overlay showing which region triggered each prediction |
+| Raw training data | Weighted BCE loss + threshold tuning | Calibrated thresholds per class to maximize F1 under severe imbalance |
 
-## 📁 Project Structure
+---
+
+## How It Works
 
 ```
-├── data/
-│   ├── raw/                # Raw images from Kaggle (gitignored)
-│   └── metadata/           # dataset_splits.csv, EDA plots
-├── src/
-│   ├── data/               # Dataset & DataLoader utilities
-│   ├── models/              # baseline CNN, ResNet50/EfficientNet-B0 transfer learning
-│   ├── training/            # train/eval engine, early stopping, pos_weight calc
-│   ├── evaluation/          # per-class AUC-ROC/F1 metrics, threshold tuning
-│   ├── visualization/       # Grad-CAM
-│   └── utils/               # Config & helpers
-├── scripts/
-│   ├── train_baseline.py
-│   ├── train_resnet.py
-│   ├── train_efficientnet.py
-│   ├── tune_thresholds.py
-│   └── run_gradcam.py
-├── app/
-│   └── main.py             # FastAPI server (predict + gradcam endpoints, serves web/dist)
-├── web/                    # React + Vite + Tailwind + shadcn/ui frontend
-├── notebooks/
-│   └── 01_eda.ipynb
-└── results/
-    ├── metrics/             # training history + test metrics per model, model_comparison.md
-    ├── visualizations/      # gradcam example overlays
-    └── RESULTS.md           # final write-up
+  X-ray image
+       |
+       v
+  [ Preprocessing ]  224x224 resize, ImageNet normalization
+       |
+       v
+  [ ResNet50 backbone ]  pretrained on ImageNet, fine-tuned on ChestX-ray14
+       |
+       v
+  [ BCEWithLogitsLoss ]  with pos_weight to handle 49x class imbalance
+       |
+       v
+  [ Per-class thresholds ]  tuned on validation set to maximize macro F1
+       |
+       v
+  [ Grad-CAM ]  gradients from layer4 -> spatial heatmap per predicted class
+       |
+       v
+  Predicted labels + probability scores + heatmap overlay
 ```
 
-## 🚀 Quick Start
+1. Images are resized to 224x224 and normalized with ImageNet mean/std.
+2. ResNet50 replaces its final FC layer with a 5-output head (one logit per class).
+3. `BCEWithLogitsLoss` with `pos_weight` penalizes false negatives on rare classes more heavily.
+4. After training, per-class thresholds are tuned on the validation set to push macro F1 above the default 0.5 cutoff.
+5. Grad-CAM backpropagates through `layer4` to produce a spatial activation map, resized and alpha-blended over the original image.
 
-1. **Install dependencies:**
+---
+
+## Model Results
+
+| Model | Macro AUC-ROC | Macro F1 (tuned) |
+|---|---|---|
+| Baseline CNN (from scratch) | 0.677 | baseline |
+| ResNet50 (transfer learning) | **0.755** | **0.318** |
+| EfficientNet-B0 (transfer learning) | 0.728 | 0.311 |
+
+Full per-class breakdown: [results/metrics/model_comparison.md](results/metrics/model_comparison.md)
+
+---
+
+## Grad-CAM Visualizations
+
+Grad-CAM on ResNet50's last conv block (`layer4`), showing what the model attends to for each predicted class:
+
+| Cardiomegaly | Effusion | Atelectasis |
+|---|---|---|
+| ![cardiomegaly](results/visualizations/gradcam_13_Cardiomegaly.png) | ![effusion](results/visualizations/gradcam_5_Effusion.png) | ![atelectasis](results/visualizations/gradcam_9_Atelectasis.png) |
+
+The Cardiomegaly heatmap lands on the heart silhouette; Effusion lights up the lower lung and costophrenic region. Both match where a radiologist would look, which suggests the model learned real anatomical features rather than dataset artifacts.
+
+Full write-up: [results/RESULTS.md](results/RESULTS.md)
+
+---
+
+## Tech Stack
+
+| Tool | Role |
+|---|---|
+| PyTorch + torchvision | Model training, ResNet50/EfficientNet-B0 transfer learning |
+| scikit-learn | AUC-ROC, F1 metrics, per-class threshold tuning |
+| matplotlib + seaborn | Training curves, EDA plots, Grad-CAM overlays |
+| Kaggle API | Dataset download (`nih-chest-xrays/sample`) |
+| FastAPI | REST API: `/predict` and `/gradcam` endpoints |
+| React + Vite + TypeScript | Frontend UI |
+| Tailwind v4 + shadcn/ui | Component styling |
+| Framer Motion | Animated UI transitions |
+| Docker | Containerized deployment |
+| Hugging Face Spaces | Cloud hosting |
+
+---
+
+## Setup
+
+**Prerequisites:**
+
+- Python 3.10+
+- Node.js 18+ (for the frontend)
+- A Kaggle account with `~/.kaggle/kaggle.json` configured
+- GPU with 4GB+ VRAM recommended (tested on RTX 3050 4GB)
+
+**Steps:**
+
+1. Install Python dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Download + explore data:**
+2. Download the dataset and run EDA:
    ```bash
    jupyter notebook notebooks/01_eda.ipynb
    ```
-   downloads the dataset via Kaggle API, builds dataset_splits.csv
+   This downloads the NIH ChestX-ray14 sample via the Kaggle API and writes `data/metadata/dataset_splits.csv`.
 
-3. **Train a model:**
+3. Train models (each script saves its best checkpoint to `results/models/`):
    ```bash
    python scripts/train_baseline.py
    python scripts/train_resnet.py
    python scripts/train_efficientnet.py
    ```
 
-4. **Build the frontend (one-time, or after changing web/):**
+4. Tune per-class thresholds:
+   ```bash
+   python scripts/tune_thresholds.py
+   ```
+
+5. Build the frontend (one-time, or after changing `web/`):
    ```bash
    cd web
    npm install
@@ -95,58 +154,91 @@ imbalance (~49x between most/least common class) that the project is about handl
    cd ..
    ```
 
-5. **Run the web demo:**
+6. Run the web demo:
    ```bash
    uvicorn app.main:app --reload
    ```
-   open http://127.0.0.1:8000 - upload a chest X-ray, get per-class probabilities
-   (resnet50, tuned thresholds) plus a Grad-CAM heatmap for the top predicted class
+   Open [http://127.0.0.1:8000](http://127.0.0.1:8000), upload a chest X-ray, and get per-class probabilities plus a Grad-CAM heatmap for the top predicted class.
 
-   for frontend development with hot reload instead, run `npm run dev` inside `web/`
-   (proxies `/predict` and `/health` to the FastAPI server on port 8000) and open
-   http://localhost:5173
-
-## 📚 Progress (5-day plan)
-
-- ✅ **Day 1:** Data loading, EDA, train/val/test splits
-- ✅ **Day 2:** Baseline CNN from scratch - test macro AUC 0.677
-- ✅ **Day 3:** Transfer learning (ResNet50 0.755, EfficientNet-B0 0.728) - both beat baseline
-- ✅ **Day 4:** Per-class threshold tuning - resnet50 macro F1 0.308 → 0.318
-- ✅ **Day 5:** Grad-CAM visualizations + final write-up
-
-See [results/metrics/model_comparison.md](results/metrics/model_comparison.md) for full per-class numbers.
-
-## 🔥 Grad-CAM
-
-Grad-CAM on resnet50's last conv block (`layer4`), showing what the model actually looks at for each predicted class:
-
-| Cardiomegaly | Effusion | Atelectasis |
-|---|---|---|
-| ![cardiomegaly](results/visualizations/gradcam_13_Cardiomegaly.png) | ![effusion](results/visualizations/gradcam_5_Effusion.png) | ![atelectasis](results/visualizations/gradcam_9_Atelectasis.png) |
-
-Cardiomegaly's heatmap lands right on the heart silhouette, and Effusion lights up the lower lung / costophrenic region - both match where a radiologist would actually look, which is a good sign the model learned real features and not some dataset artifact.
-
-Full write-up: [results/RESULTS.md](results/RESULTS.md)
-
-## 🛠️ Tech Stack
-
-- **Framework:** PyTorch + torchvision
-- **Metrics:** scikit-learn (AUC-ROC, F1)
-- **Viz:** matplotlib, seaborn
-- **Dataset:** Kaggle API
-- **Backend:** FastAPI serving predictions + Grad-CAM overlays
-- **Frontend:** React + Vite + TypeScript + Tailwind v4 + shadcn/ui + Framer Motion
-- **Deployment:** Docker, hosted on Hugging Face Spaces
-
-## 📝 Design Decisions
-
-- **BCEWithLogitsLoss:** For multi-label classification (not CrossEntropyLoss which is single-label only)
-- **Weighted loss:** To handle severe class imbalance without modifying training data
-- **AUC-ROC/F1:** Better than accuracy for imbalanced multi-label problems
-- **224x224 images:** Standard for ImageNet pretrained models
-- **Modular code:** Easy to add new models and evaluate systematically
+   For frontend development with hot reload, run `npm run dev` inside `web/` (proxies `/predict` and `/health` to port 8000) and open [http://localhost:5173](http://localhost:5173).
 
 ---
 
-**Author:** Dippy2003  
-**Goal:** CV portfolio project demonstrating deep learning mastery
+## Project Structure
+
+```
+.
+├── data/
+│   ├── raw/                      # Raw images from Kaggle (gitignored)
+│   └── metadata/                 # dataset_splits.csv, EDA plots
+├── src/
+│   ├── data/                     # Dataset class and DataLoader utilities
+│   ├── models/                   # Baseline CNN, ResNet50, EfficientNet-B0
+│   ├── training/                 # Train/eval engine, early stopping, pos_weight
+│   ├── evaluation/               # Per-class AUC-ROC/F1, threshold tuning
+│   ├── visualization/            # Grad-CAM implementation
+│   └── utils/                    # Config and shared helpers
+├── scripts/
+│   ├── train_baseline.py         # Train CNN from scratch
+│   ├── train_resnet.py           # Fine-tune ResNet50
+│   ├── train_efficientnet.py     # Fine-tune EfficientNet-B0
+│   ├── tune_thresholds.py        # Per-class threshold search
+│   └── run_gradcam.py            # Generate Grad-CAM overlays
+├── app/
+│   └── main.py                   # FastAPI server (predict + gradcam, serves web/dist)
+├── web/                          # React + Vite + Tailwind + shadcn/ui frontend
+├── notebooks/
+│   └── 01_eda.ipynb              # Dataset download, EDA, split creation
+└── results/
+    ├── metrics/                  # Training history, test metrics, model_comparison.md
+    ├── visualizations/           # Grad-CAM example overlays
+    └── RESULTS.md                # Final write-up with analysis
+```
+
+---
+
+## Dataset
+
+NIH ChestX-ray14 sample set via Kaggle (`nih-chest-xrays/sample`): 5,606 images across 5 classes.
+
+| Class | Prevalence |
+|---|---|
+| No Finding | 54.3% |
+| Effusion | 11.5% |
+| Atelectasis | 9.1% |
+| Cardiomegaly | 2.5% |
+| Pneumonia | 1.1% |
+
+The 5,606-image sample rather than the full 112k dataset (45 GB) was used to fit within a 4 GB VRAM budget while preserving the same ~49x class imbalance ratio that the project is built to handle.
+
+---
+
+## Design Decisions
+
+| Decision | Reason |
+|---|---|
+| `BCEWithLogitsLoss` | Multi-label classification requires independent per-class binary predictions, not a single softmax |
+| `pos_weight` in loss | Handles severe class imbalance without modifying or oversampling training data |
+| AUC-ROC + F1 metrics | Accuracy is misleading on heavily imbalanced data; these metrics reflect true detection quality |
+| 224x224 input size | Standard for ImageNet-pretrained models; required to use pretrained weights without shape mismatch |
+| Per-class threshold tuning | Default 0.5 threshold is suboptimal when class priors are extreme; tuning per class lifts macro F1 |
+
+---
+
+## Progress
+
+| Day | Milestone | Result |
+|---|---|---|
+| Day 1 | Data loading, EDA, train/val/test splits | Done |
+| Day 2 | Baseline CNN from scratch | Test macro AUC 0.677 |
+| Day 3 | Transfer learning: ResNet50 + EfficientNet-B0 | ResNet50 AUC 0.755, EfficientNet AUC 0.728 |
+| Day 4 | Per-class threshold tuning | ResNet50 macro F1: 0.308 to 0.318 |
+| Day 5 | Grad-CAM visualizations + final write-up | Done |
+
+---
+
+## License
+
+MIT
+
+**Author:** [Dippy2003](https://github.com/Dippy2003)
